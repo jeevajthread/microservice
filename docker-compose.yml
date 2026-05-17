@@ -1,0 +1,95 @@
+services:
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - ms-net
+
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - ms-net
+   
+   
+  mysql-container:
+    image: mysql:8
+    container_name: mysql-container
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - my-data:/var/lib/mysql
+    networks:
+      - ms-net
+
+  service-registry:
+    build: ./service-registry
+    image: service-registry
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+    networks:
+      - ms-net
+
+  product-service:
+    build: ./product-service
+    image: product-service
+    container_name: product-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql-container
+      - service-registry
+    networks:
+      - ms-net
+
+  order-service:
+    build: ./order-service
+    image: order-service
+    container_name: order-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mysql-container
+      - service-registry
+      - product-service
+    networks:
+      - ms-net
+
+  api-gateway:
+    build: ./api-gateway
+    image: api-gateway
+    container_name: api-gateway
+    ports:
+      - "8083:8083"
+    depends_on:
+      - service-registry
+      - product-service
+      - order-service
+    networks:
+      - ms-net
+
+volumes:
+  my-data:
+
+networks:
+  ms-net:
+    external: true

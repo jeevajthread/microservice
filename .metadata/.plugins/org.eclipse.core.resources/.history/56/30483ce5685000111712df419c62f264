@@ -1,0 +1,16 @@
+package com.jthread.stringprograms;
+
+public class Test {
+
+	public static void main(String[] args) {
+		int i = 10;
+		i = i+20;
+		System.out.println(i);
+		String s = "jThread";
+		System.out.println(s);
+		s = s+ " Trivadrum";
+		System.out.println(s);
+
+	}
+
+}
